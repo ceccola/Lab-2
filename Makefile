@@ -1,7 +1,7 @@
 # definizione del compilatore e dei flag di compilazione
 # che vengono usate dalle regole implicite
 CC=gcc
-CFLAGS=-std=c11 -Wall -g -O -pthread
+CFLAGS=-std=c11 -Wall -g -O3 -pthread
 LDLIBS=-lm -pthread -lrt
 
 
