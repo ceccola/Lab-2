@@ -3,7 +3,6 @@
 // collezione di chiamate a funzioni di sistema con controllo output
 // i prototipi sono in xerrori.h
 
-
 // termina un processo con eventuale messaggio d'errore
 // si noti che la variabile errno è "thread local"
 // quindi ne esiste una diversa per ogni thread  
@@ -38,8 +37,6 @@ void xperror(int en, char *msg) {
   else
     fprintf(stderr,"%s\n",errmsg);
 }
-
-
 
 // ---------- operazioni su FILE *
 FILE *xfopen(const char *path, const char *mode, int linea, char *file) {
@@ -105,6 +102,16 @@ int xpthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr
   return e;
 }
 
+int xpthread_rwlock_init(pthread_rwlock_t *restrict rwlock, const pthread_rwlockattr_t *restrict attr, int linea, char *file) {
+  int e = pthread_rwlock_init(rwlock, attr);
+  if (e!=0) {
+    xperror(e, "Errore pthread_rwlock_init");
+    fprintf(stderr,"== %d == Linea: %d, File: %s\n",getpid(),linea,file);
+    pthread_exit(NULL);
+  }  
+  return e;
+}
+
 int xpthread_mutex_destroy(pthread_mutex_t *mutex, int linea, char *file) {
   int e = pthread_mutex_destroy(mutex);
   if (e!=0) {
@@ -129,6 +136,33 @@ int xpthread_mutex_unlock(pthread_mutex_t *mutex, int linea, char *file) {
   int e = pthread_mutex_unlock(mutex);
   if (e!=0) {
     xperror(e, "Errore pthread_mutex_unlock");
+    fprintf(stderr,"== %d == Linea: %d, File: %s\n",getpid(),linea,file);
+    pthread_exit(NULL);
+  }
+  return e;
+}
+int xpthread_rwlock_rdlock(pthread_rwlock_t *mutex, int linea, char *file) {
+  int e = pthread_rwlock_rdlock(mutex);
+  if (e!=0) {
+    xperror(e, "Errore pthread_mutex_lock");
+    fprintf(stderr,"== %d == Linea: %d, File: %s\n",getpid(),linea,file);
+    pthread_exit(NULL);
+  }
+  return e;
+}
+int xpthread_rwlock_wrlock(pthread_rwlock_t *mutex, int linea, char *file) {
+  int e = pthread_rwlock_wrlock(mutex);
+  if (e!=0) {
+    xperror(e, "Errore pthread_mutex_lock");
+    fprintf(stderr,"== %d == Linea: %d, File: %s\n",getpid(),linea,file);
+    pthread_exit(NULL);
+  }
+  return e;
+}
+int xpthread_rwlock_unlock(pthread_rwlock_t *mutex, int linea, char *file) {
+  int e = pthread_rwlock_unlock(mutex);
+  if (e!=0) {
+    xperror(e, "Errore pthread_mutex_lock");
     fprintf(stderr,"== %d == Linea: %d, File: %s\n",getpid(),linea,file);
     pthread_exit(NULL);
   }

@@ -18,7 +18,6 @@
 #include <sys/stat.h> /* For mode constants */
 #include <fcntl.h>	  /* For O_* constants */
 #include <pthread.h>
-
 // termina programma
 void termina(const char *s);
 void xtermina(const char *s, int linea, char *file);
@@ -42,6 +41,12 @@ int xpthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr
 int xpthread_mutex_destroy(pthread_mutex_t *mutex, int linea, char *file);
 int xpthread_mutex_lock(pthread_mutex_t *mutex, int linea, char *file);
 int xpthread_mutex_unlock(pthread_mutex_t *mutex, int linea, char *file);
+
+//rwlock
+int xpthread_rwlock_init(pthread_rwlock_t *restrict rwlock, const pthread_rwlockattr_t *restrict attr, int linea, char *file);
+int xpthread_rwlock_rdlock(pthread_rwlock_t *mutex, int linea, char *file);
+int xpthread_rwlock_wrlock(pthread_rwlock_t *mutex, int linea, char *file);
+int xpthread_rwlock_unlock(pthread_rwlock_t *mutex, int linea, char *file);
 
 // barrier
 int xpthread_barrier_init(pthread_barrier_t *restrict barrier, const pthread_barrierattr_t *restrict attr,
