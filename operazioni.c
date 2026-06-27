@@ -302,7 +302,7 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		int maxU, maxV, maxW; 
 		maxW = -1;
 		dfs_max(u, v, -1, &maxW, &maxU, &maxV, g);
-		if(w < maxW){
+		if(w < maxW){ //Se ha trovato un arco di costo maggiore 
 			//Imposta a false la flag msf dell'arco nella hash e nelle liste di adiacenza 
 			int old_index = hash(maxU, maxV,g->hashSize) % g->nMutex;
 			xpthread_mutex_lock(&g->hash_mux[old_index], QUI);
