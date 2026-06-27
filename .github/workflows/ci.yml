@@ -31,12 +31,8 @@ jobs:
           echo "4 3 31" > mod.mm
           echo "" > empty
           python msf.py minimo.gr empty >stdout.txt 2>stderr.txt
-          cat stderr.txt >&2
-          cat stdout.txt>&2
           diff stdout.txt mod.0 2> >(sed -u 's/^/STDERR: /' >&2)
           python msf.py minimo.gr minimo.mp >stdout.txt 2>stderr.txt 
-          cat stderr.txt >&2
-          cat stdout.txt>&2
           diff stdout.txt mod.mp 2> >(sed -u 's/^/STDERR: /' >&2)
 
           # msf.out

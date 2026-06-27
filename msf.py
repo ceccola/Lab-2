@@ -20,7 +20,7 @@ numCoCo:int
 hash_map:dict = {}
 
 if(len(sys.argv) < 3):
-	print("Utilizzo: msf.py file_grafo file_archi")
+	sys.sdterr.write("Utilizzo: msf.py file_grafo file_archi")
 	sys.exit(1)
 
 #File per grafo e archi
