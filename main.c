@@ -43,7 +43,7 @@ int main (int argc, char *argv[]){
 
 /*---------------------------------------------PARSING ARCHI DA FILE--------------------------------------------------------------------- */
 	FILE *f = xfopen(argv[1], "r", QUI); //Apertura file per la lettura degli archi del grafo 
-	arco **archi;
+	arco **archi = NULL;
 	int cArchi = 0;
 	char *buffer = NULL; //Usato da getline
 	size_t n = 0; //riutilizzate ad ogni iterazione
@@ -77,7 +77,7 @@ int main (int argc, char *argv[]){
 				break; 
 			case 'a': //Se la linea rappresenta un arco 
 				//Se non è stata ancora trovata la linea di inizio per configurare i valori
-				if(g.vicini == NULL) xtermina("Linea di configurazione non trovata", QUI);
+				if(archi == NULL) xtermina("Linea di configurazione non trovata", QUI);
 				//Ottieni valori
 				int u = atoi(strtok(NULL, " "));
 				int v = atoi(strtok(NULL, " "));
@@ -162,8 +162,8 @@ int main (int argc, char *argv[]){
 	free(thread_ids);
 	fprintf(stdout, "Operazioni terminate\n");
 
-/*---------------------------------------------FREE---------------------------------------------------------------------------------------*/
-	free_grafo(&g, archi);
+/*-------------------------FREE + STAMPA STATISTICHE---------------------------------------------------------------------------------------*/
+	free_grafo(&g, archi); //Libera la memoria del grafo e contemporaneamente stampa le statistiche
 	xpthread_mutex_destroy(&locks.mutex, QUI);
 	return 0; 
 }

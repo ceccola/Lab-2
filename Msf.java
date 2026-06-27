@@ -124,6 +124,7 @@ public class Msf{
 						}
 						grafo.put(hash(u, v), a);
 						archi.add(a);
+						nArchi+=1;
 						break;
 					case "-":
 						u = Integer.parseInt(campi[1]);
@@ -139,6 +140,7 @@ public class Msf{
 							System.exit(1);
 						}
 						archi.remove(rem);
+						nArchi-=1;
 						break;
 					default:
 						continue;

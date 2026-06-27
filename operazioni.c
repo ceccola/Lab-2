@@ -78,9 +78,7 @@ bool cancella_arco(int u, int v, grafo *g){
 	xpthread_mutex_lock(&g->hash_mux[index % g->nMutex], QUI);
 	arco *a = hash_get(u,v, g->gHash, g->hashSize);
 	if(a == NULL){
-		pthread_mutex_lock(&g->stats_mux);
 		fprintf(stdout, "- %d %d 0", u, v);
-		pthread_mutex_unlock(&g->stats_mux);
 		xperror(1, "Arco non trovato"); 
 		return NULL;
 	} 
@@ -241,8 +239,6 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 	xpthread_mutex_unlock(&g->hash_mux[index], QUI);
 
 	int cu, cv;
-	int nArchi, numCoCo;
-	long costoMSF;
 	//Aggiorna le liste di adiacenza
 	int i, j;
 	while(true){
@@ -278,9 +274,6 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		g->costoMSF += w;
 		g->numCoCo--; //Diminuisce il numero di componenti connesse 
 		g->nArchi++;
-		costoMSF = g->costoMSF;
-		numCoCo = g->numCoCo;
-		nArchi =  g->nArchi;
 		xpthread_mutex_unlock(&g->stats_mux, QUI);
 
 		int min = cu < cv ? cu : cv; //Trova il minimo tra le due radici
@@ -301,8 +294,8 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 			free(lu.vicini);
 			free(lu.visitati);
 		}
-		pthread_mutex_unlock(&g->cCon_mux[j]);
-		pthread_mutex_unlock(&g->cCon_mux[i]);
+		xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
+		xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 	} else { //Se i nodi si trovano nella stessa componente connessa 
 
 		//Valori di riferimento per l'eventuale massimo arco da sostituire
@@ -329,9 +322,6 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 			int dif = maxW - w;
 			xpthread_mutex_lock(&g->stats_mux, QUI);
 			g->costoMSF -= dif;
-			nArchi = g->nArchi;
-			costoMSF = g->costoMSF;
-			numCoCo = g->numCoCo;
 			xpthread_mutex_unlock(&g->stats_mux, QUI);
 		}
 		xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
@@ -339,12 +329,10 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		//Incrementa il numero di archi 
 		xpthread_mutex_lock(&g->stats_mux, QUI);
 		g->nArchi++;
-		nArchi =  g->nArchi;
-		numCoCo = g->numCoCo;
-		costoMSF = g->costoMSF;
 		xpthread_mutex_unlock(&g->stats_mux, QUI);
 	}
-	fprintf(stdout, "+ %d %d %d %d %d %ld \n", u, v, w, nArchi, numCoCo, costoMSF);
+	xpthread_mutex_lock(&g->stats_mux, QUI);
+	fprintf(stdout, "+ %d %d %d %d %ld \n", u,v, g->nArchi, g->numCoCo, g->costoMSF);
+	xpthread_mutex_unlock(&g->stats_mux, QUI);
 	return NULL;
-	
 }
