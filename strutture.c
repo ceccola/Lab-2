@@ -9,7 +9,7 @@
 
 int crivello(int n){ //Ritorna il numero primo più vicino alla dimensione della tabella hash
 	//Crivello di Eratostene
-	int *sieve = malloc((n+1) * sizeof(bool)); //false = primo 
+	bool *sieve = calloc((n+1), sizeof(bool)); //false = primo 
 	assert(sieve != NULL);
 	sieve[0] = sieve[1] = true; //0 e 1 non vengono considerati 
 	for(int i = 2; i*i <= n;i++){ 
@@ -24,11 +24,12 @@ int crivello(int n){ //Ritorna il numero primo più vicino alla dimensione della
 	for(int i = n; i>=0; i--){
 		//Scorre al contrario l'array e restituisci il numero più vicino ad n e primo 
 		if(!sieve[i]){
+			free(sieve);
 			return i;
 		}
 	}
-	return 2;
 	free(sieve);
+	return 2;	
 }
 
 int hash(int u, int v, int hashSize) {
