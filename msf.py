@@ -32,6 +32,8 @@ archi:list[list[Arco]] = [] #Lista di archi per ricerca msf
 with open(file_grafo, "r") as file:
 	for linea in file: 
 		campi = linea.strip().split()
+		if(not campi):
+			continue
 		if(campi[0] == "c"): #Ignora i commenti e continua
 			continue
 		elif(campi[0] == "p"): #Configura il numero di nodi e di archi
@@ -54,6 +56,8 @@ numCoCo = nNodi
 with open(file_operazioni) as file:
 	for linea in file:
 		campi = linea.strip().split()
+		if(not campi):
+			continue
 		if(campi[0] == "c"):
 			continue
 		elif(campi[0] == "+"):
