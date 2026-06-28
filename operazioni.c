@@ -198,8 +198,8 @@ bool cancella_arco(int u, int v, grafo *g){
 			arco *update = hash_get(minArco.u, minArco.v, g->gHash, g->hashSize); 
 			update->msf = true; 
 			xpthread_mutex_unlock(&g->hash_mux[(hash(minArco.u, minArco.v, g->hashSize)) % g->nMutex], QUI);
-			set_msf_flag_true(g->vicini, minArco.u, minArco.v);
-			set_msf_flag_true(g->vicini, minArco.v, minArco.u);	
+			set_msf_flag(g->vicini, minArco.u, minArco.v, true);
+			set_msf_flag(g->vicini, minArco.v, minArco.u, true);	
 			xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
 			xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 		}
@@ -270,8 +270,8 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		xpthread_mutex_lock(&g->hash_mux[index], QUI);
 		a->msf = true;
 		xpthread_mutex_unlock(&g->hash_mux[index], QUI);
-		set_msf_flag_true(g->vicini, u, v);
-		set_msf_flag_true(g->vicini, v, u);
+		set_msf_flag(g->vicini, u, v, true);
+		set_msf_flag(g->vicini, v, u, true);
 		xpthread_mutex_lock(&g->stats_mux, QUI);
 		g->costoMSF += w;
 		g->numCoCo--; //Diminuisce il numero di componenti connesse 
@@ -314,11 +314,11 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 			a->msf = true;
 			xpthread_mutex_unlock(&g->hash_mux[index], QUI);
 			//Imposta a false la flag del nuovo arco nelle liste di adiacenza
-			set_msf_flag_false(g->vicini, maxU, maxV);
-			set_msf_flag_false(g->vicini, maxV, maxU);
+			set_msf_flag(g->vicini, maxU, maxV, false);
+			set_msf_flag(g->vicini, maxV, maxU, false);
 			//Imposta a true la flag del nuovo arco nelle liste di adiacenza
-			set_msf_flag_true(g->vicini, u, v);
-			set_msf_flag_true(g->vicini, v, u);
+			set_msf_flag(g->vicini, u, v, true);
+			set_msf_flag(g->vicini, v, u, true);
 
 			xpthread_mutex_lock(&g->stats_mux, QUI);
 			g->costoMSF -= maxW;
