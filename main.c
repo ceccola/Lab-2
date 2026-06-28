@@ -25,7 +25,6 @@ int main (int argc, char *argv[]){
 	g.cCon = NULL; 
 	g.nMutex = 1000;
 	int opt; 
-
 	while((opt=getopt(argc, argv, "t:H:M:")) != -1){ 
 		//Controlla per i parametri -t, -H e -M specificando che tutti devono essere seguidi da parametri 
 		switch (opt){
@@ -42,6 +41,7 @@ int main (int argc, char *argv[]){
 				xtermina("Inserito parametro non previsto nella CLI", QUI);
 		}
 	}
+	fprintf(stderr, "Dopo getopt hashsize = %d \n", g.hashSize);
 
 /*---------------------------------------------PARSING ARCHI DA FILE--------------------------------------------------------------------- */
 	FILE *f = xfopen(file_grafo, "r", QUI); //Apertura file per la lettura degli archi del grafo 

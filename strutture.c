@@ -9,13 +9,17 @@
 
 int crivello(int n){ //Ritorna il numero primo più vicino alla dimensione della tabella hash
 	//Crivello di Eratostene
-	bool *sieve = calloc((n+1), sizeof(bool)); //false = primo 
+	bool *sieve = malloc((n+1) * sizeof(bool)); //false = primo 
 	assert(sieve != NULL);
+	for(int i = 0; i < n+1; i++){
+		sieve[i] = false;
+	}
+	
 	sieve[0] = sieve[1] = true; //0 e 1 non vengono considerati 
-	for(int i = 2; i*i <= n;i++){ 
+	for(int i = 2; (long) i*i <= n;i++){ 
 		//per ogni elemento non composto, segna i suoi multipli come composti
 		if(!sieve[i]){
-			for (int j = i*i; j<= n; j++){
+			for (int j = i*i; j<= n; j+=i){
 				sieve[j]=true; 
 			}
 		}
