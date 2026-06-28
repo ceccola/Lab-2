@@ -32,7 +32,7 @@ typedef struct operazione{
 typedef struct pclock{
 	sem_t vuoti, pieni;
 	pthread_mutex_t mutex;
-	operazione buffer[300];
+	operazione buffer[1024];
 	int testa, coda; 
 } pclock;
 

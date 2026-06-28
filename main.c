@@ -112,7 +112,7 @@ int main (int argc, char *argv[]){
 	locks.coda = 0;
 	locks.testa = 0;
 	xsem_init(&locks.pieni, 0, 0, QUI);
-	xsem_init(&locks.vuoti, 0, 300, QUI);
+	xsem_init(&locks.vuoti, 0, 1024, QUI);
 	xpthread_mutex_init(&locks.mutex, NULL, QUI);
 	argomenti *a = malloc(sizeof(argomenti));
 	a->locks = &locks;

@@ -76,7 +76,6 @@ void produttore (char *file, pclock *locks, int nThread){
 				xpthread_mutex_unlock(&locks->mutex, QUI);
 				xsem_post(&locks->pieni, QUI);
 	}
-
 	fclose(f2);
 }
 void *consumatore (void *args){
