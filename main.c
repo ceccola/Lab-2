@@ -14,6 +14,8 @@ int main (int argc, char *argv[]){
 	if(argc < 3){
 		termina("Utilizzo: msf.out file_grafo file_archi [-t threads] [-H hashsize] [-M nmutex]");
 	}
+	char *file_grafo = argv[1];
+	char *file_op = argv[2];
 	//Inizializzazioni
 	int nThread = 3;
 	struct grafo g; //Creazione grafo, allocazione statica in quanto è nel main 
@@ -42,7 +44,7 @@ int main (int argc, char *argv[]){
 	}
 
 /*---------------------------------------------PARSING ARCHI DA FILE--------------------------------------------------------------------- */
-	FILE *f = xfopen(argv[1], "r", QUI); //Apertura file per la lettura degli archi del grafo 
+	FILE *f = xfopen(file_grafo, "r", QUI); //Apertura file per la lettura degli archi del grafo 
 	arco **archi = NULL;
 	int cArchi = 0;
 	char *buffer = NULL; //Usato da getline
@@ -143,7 +145,7 @@ int main (int argc, char *argv[]){
 		}
 	}
 	//Legge dal file delle operazioni e le mette sul buffer condiviso
-	produttore(argv[2], &locks, nThread);
+	produttore(file_op, &locks, nThread);
 
 	//Attendi la terminazione dei thread
 	for(int i=0; i<nThread; i++){
