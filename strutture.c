@@ -130,14 +130,23 @@ bool rimuovi_elemento(int u, int v, elemento **vicini){ //Elimina un elemento da
 	}
 	return false;
 }
-void flip_msf_flag(elemento **vicini, int u, int v){ //Imposta a true il flag msf per un arco
+void set_msf_flag_true(elemento **vicini, int u, int v){ //Imposta a true il flag msf per un arco
 	elemento *head = vicini[u];
 	while(head != NULL && head->id != v ){
 		head = head->next;
 	}
 	if(head == NULL) xtermina("Vicino non trovato", QUI);
-	head->msf = !head->msf;
+	head->msf = true;
 }
+void set_msf_flag_false(elemento **vicini, int u, int v){ //Imposta a true il flag msf per un arco
+	elemento *head = vicini[u];
+	while(head != NULL && head->id != v ){
+		head = head->next;
+	}
+	if(head == NULL) xtermina("Vicino non trovato", QUI);
+	head->msf = false;
+}
+
 
 
 /*---------------------------------------------UNION FIND E KRUSKAL-----------------------------------------------------------*/
@@ -202,8 +211,8 @@ long kruskalAlgo(grafo *g, arco **archi){
 			g->numCoCo--;
 			archi[i]->msf = true; //Aggiorna il flag dell'arco 
 			//Aggiorna il tag dell'arco nelle liste di adiacenza 
-			flip_msf_flag(g->vicini, archi[i]->u, archi[i]->v);
-			flip_msf_flag(g->vicini, archi[i]->v, archi[i]->u);
+			set_msf_flag_true(g->vicini, archi[i]->u, archi[i]->v);
+			set_msf_flag_true(g->vicini, archi[i]->v, archi[i]->u);
 			
             minCost += wt;
         }

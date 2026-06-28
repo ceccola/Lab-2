@@ -150,7 +150,7 @@ bool cancella_arco(int u, int v, grafo *g){
 			int id = lu.vicini[i];
 			elemento *vicino = g->vicini[id];
 			while(vicino != NULL){ //Controlla se uno dei suoi vicini è nei visitati di Lv e ha costo minore del candidato attuale
-				if(lv.visitati[vicino->id] && vicino->w < minArco.weight){
+				if(lv.visitati[vicino->id] && !vicino->msf && vicino->w < minArco.weight){
 					minArco.u = id;
 					minArco.v = vicino->id;
 					minArco.weight = vicino->w;
@@ -198,8 +198,8 @@ bool cancella_arco(int u, int v, grafo *g){
 			arco *update = hash_get(minArco.u, minArco.v, g->gHash, g->hashSize); 
 			update->msf = true; 
 			xpthread_mutex_unlock(&g->hash_mux[(hash(minArco.u, minArco.v, g->hashSize)) % g->nMutex], QUI);
-			flip_msf_flag(g->vicini, minArco.u, minArco.v);
-			flip_msf_flag(g->vicini, minArco.v, minArco.u);	
+			set_msf_flag_true(g->vicini, minArco.u, minArco.v);
+			set_msf_flag_true(g->vicini, minArco.v, minArco.u);	
 			xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
 			xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 		}
@@ -230,7 +230,7 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 	a->weight = w; 
 	a->msf = false;
 	int ok = hash_put(a, g);
-	if(ok != 0){
+	if(ok != 0){ // Se la put non è andata a buon fine rilascia la lock e stampa l'esito
 		xpthread_mutex_unlock(&g->hash_mux[index], QUI);
 		free(a);
 		fprintf(stdout, "+ %d %d %d 0", u, v, w);
@@ -296,12 +296,12 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		}
 		xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
 		xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
-	} else { //Se i nodi si trovano nella stessa componente connessa 
-
+	} else { //Se i nodi si trovano nella stessa componente connessa
 		//Valori di riferimento per l'eventuale massimo arco da sostituire
 		int maxU, maxV, maxW; 
 		maxW = -1;
 		dfs_max(u, v, -1, &maxW, &maxU, &maxV, g);
+		fprintf(stderr, "Arco trovato: %d %d %d \n", maxU, maxV, maxW);
 		if(w < maxW){ //Se ha trovato un arco di costo maggiore 
 			//Imposta a false la flag msf dell'arco nella hash e nelle liste di adiacenza 
 			int old_index = hash(maxU, maxV,g->hashSize) % g->nMutex;
@@ -313,15 +313,15 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 			a->msf = true;
 			xpthread_mutex_unlock(&g->hash_mux[index], QUI);
 			//Imposta a false la flag del nuovo arco nelle liste di adiacenza
-			flip_msf_flag(g->vicini, maxU, maxV);
-			flip_msf_flag(g->vicini, maxV, maxU);
+			set_msf_flag_false(g->vicini, maxU, maxV);
+			set_msf_flag_false(g->vicini, maxV, maxU);
 			//Imposta a true la flag del nuovo arco nelle liste di adiacenza
-			flip_msf_flag(g->vicini, u, v);
-			flip_msf_flag(g->vicini, v, u);
+			set_msf_flag_true(g->vicini, u, v);
+			set_msf_flag_true(g->vicini, v, u);
 
-			int dif = maxW - w;
 			xpthread_mutex_lock(&g->stats_mux, QUI);
-			g->costoMSF -= dif;
+			g->costoMSF -= maxW;
+			g->costoMSF += w;
 			xpthread_mutex_unlock(&g->stats_mux, QUI);
 		}
 		xpthread_mutex_unlock(&g->cCon_mux[j], QUI);

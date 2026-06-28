@@ -61,7 +61,8 @@ bool rimuovi_elemento(int u, int v, elemento **vicini);
 
 /*---------------------------------UNION FIND E KRUSKAL-------------------------------------*/
 int find(int *parent, int component);
-void flip_msf_flag(elemento **vicini, int u, int v);
+void set_msf_flag_true(elemento **vicini, int u, int v);
+void set_msf_flag_false(elemento **vicini, int u, int v);
 long kruskalAlgo(grafo *g, arco **archi);
 
 /*----------------------------------------FREE----------------------------------------------*/
