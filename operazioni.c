@@ -270,6 +270,8 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		xpthread_mutex_lock(&g->hash_mux[index], QUI);
 		a->msf = true;
 		xpthread_mutex_unlock(&g->hash_mux[index], QUI);
+		set_msf_flag_true(g->vicini, u, v);
+		set_msf_flag_true(g->vicini, v, u);
 		xpthread_mutex_lock(&g->stats_mux, QUI);
 		g->costoMSF += w;
 		g->numCoCo--; //Diminuisce il numero di componenti connesse 
@@ -301,7 +303,6 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		int maxU, maxV, maxW; 
 		maxW = -1;
 		dfs_max(u, v, -1, &maxW, &maxU, &maxV, g);
-		fprintf(stderr, "Arco trovato: %d %d %d \n", maxU, maxV, maxW);
 		if(w < maxW){ //Se ha trovato un arco di costo maggiore 
 			//Imposta a false la flag msf dell'arco nella hash e nelle liste di adiacenza 
 			int old_index = hash(maxU, maxV,g->hashSize) % g->nMutex;
