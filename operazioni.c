@@ -192,14 +192,16 @@ bool cancella_arco(int u, int v, grafo *g){
 			//Aggiorna il costo della msf togliendo il peso dell'arco rimosso e aggiungendo il peso del nuovo arco
 			g->costoMSF -= cpy.weight;
 			g->costoMSF += minArco.weight;
-			xpthread_mutex_unlock(&g->stats_mux, QUI);
+			
 			xpthread_mutex_lock(&g->hash_mux[(hash(minArco.u, minArco.v, g->hashSize)) % g->nMutex], QUI);
 			//Se l'arco è stato trovato imposta il flag msf a true sia nell'hash che in vicini
 			arco *update = hash_get(minArco.u, minArco.v, g->gHash, g->hashSize); 
 			update->msf = true; 
-			xpthread_mutex_unlock(&g->hash_mux[(hash(minArco.u, minArco.v, g->hashSize)) % g->nMutex], QUI);
+			
 			set_msf_flag(g->vicini, minArco.u, minArco.v, true);
-			set_msf_flag(g->vicini, minArco.v, minArco.u, true);	
+			set_msf_flag(g->vicini, minArco.v, minArco.u, true);
+			xpthread_mutex_unlock(&g->stats_mux, QUI);
+			xpthread_mutex_unlock(&g->hash_mux[(hash(minArco.u, minArco.v, g->hashSize)) % g->nMutex], QUI);
 			xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
 			xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 		}

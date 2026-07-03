@@ -19,11 +19,19 @@ public class Msf{
 		public int compareTo(Arco other){
 			return Integer.compare(this.w, other.w);
 		}
+
+		@Override
+		public boolean equals(Object obj){
+			Arco other = (Arco) obj;
+			if(this.u != other.u) return false;
+			if(this.v != other.v) return false;
+			if(this.w != other.w) return false;
+			return true;
+		}
 	}
 
-	public static int hash(int u, int v){
-		long risultato = (u * 2654435761L) ^ (v * 2246822519L);
-		return (int) Math.abs(risultato);
+	public static long hash(int u, int v){
+		return ((long) u << 32) | (v & 0xFFFFFFFFL);
 	}
 	public static int findParent(int[] parent, int component){ //Find con path compression ricorsiva
 		if(parent[component] == component) return component;
@@ -50,7 +58,7 @@ public class Msf{
 		}
 		String file_grafo = args[0];
 		String file_operazioni = args[1];
-		final HashMap<Integer, Arco> grafo = new HashMap<>(); //Hashmap degli archi
+		final HashMap<Long, Arco> grafo = new HashMap<>(); //Hashmap degli archi
 		ArrayList<Arco> archi = new ArrayList<>(); //Arraylist di archi per kruskal
 		int nNodi = -1, nArchi = -1, numCoCo;
 /*-------------------------------------------LETTURA GRAFO---------------------------------------------------------------- */
@@ -102,7 +110,6 @@ public class Msf{
 				String op = in.readLine();
 				if(op == null) break;
 				String[] campi = op.trim().split("\\s+");
-				
 				switch(campi[0]){
 					case "c": //Se trova un commento lo ignora 
 						continue;
@@ -116,7 +123,7 @@ public class Msf{
 						}
 						int w = Integer.parseInt(campi[3]);
 						Arco a  = new Arco(u, v, w);
-						int key = hash(u, v);
+						long key = hash(u, v);
 						Arco cmp = grafo.get(key);
 						if(cmp != null && cmp.equals((a))){
 							System.err.println("Arco da inserire già esistente");

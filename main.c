@@ -41,7 +41,6 @@ int main (int argc, char *argv[]){
 				xtermina("Inserito parametro non previsto nella CLI", QUI);
 		}
 	}
-	fprintf(stderr, "Dopo getopt hashsize = %d \n", g.hashSize);
 
 /*---------------------------------------------PARSING ARCHI DA FILE--------------------------------------------------------------------- */
 	FILE *f = xfopen(file_grafo, "r", QUI); //Apertura file per la lettura degli archi del grafo 
