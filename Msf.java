@@ -58,7 +58,7 @@ public class Msf{
 			while(true){
 				String op = in.readLine();
 				if(op == null) break;
-				String[] campi = op.split(" ");
+				String[] campi = op.trim().split("\\s+");
 				
 
 				switch(campi[0]){
@@ -101,7 +101,7 @@ public class Msf{
 		while(true){
 				String op = in.readLine();
 				if(op == null) break;
-				String[] campi = op.split(" ");
+				String[] campi = op.trim().split("\\s+");
 				
 				switch(campi[0]){
 					case "c": //Se trova un commento lo ignora 
