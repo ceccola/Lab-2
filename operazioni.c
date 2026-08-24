@@ -188,18 +188,19 @@ bool cancella_arco(int u, int v, grafo *g){
 			g->costoMSF -= cpy.weight; //Sottrae il costo dell'arco rimosso dal costo della msf
 			xpthread_mutex_unlock(&g->stats_mux, QUI);
 		} else { 
-			xpthread_mutex_lock(&g->stats_mux, QUI);
-			//Aggiorna il costo della msf togliendo il peso dell'arco rimosso e aggiungendo il peso del nuovo arco
-			g->costoMSF -= cpy.weight;
-			g->costoMSF += minArco.weight;
-			
 			xpthread_mutex_lock(&g->hash_mux[(hash(minArco.u, minArco.v, g->hashSize)) % g->nMutex], QUI);
 			//Se l'arco è stato trovato imposta il flag msf a true sia nell'hash che in vicini
 			arco *update = hash_get(minArco.u, minArco.v, g->gHash, g->hashSize); 
 			update->msf = true; 
-			
+
+			xpthread_mutex_lock(&g->stats_mux, QUI);
+			//Aggiorna il costo della msf togliendo il peso dell'arco rimosso e aggiungendo il peso del nuovo arco
+			g->costoMSF -= cpy.weight;
+			g->costoMSF += minArco.weight;
+
 			set_msf_flag(g->vicini, minArco.u, minArco.v, true);
 			set_msf_flag(g->vicini, minArco.v, minArco.u, true);
+
 			xpthread_mutex_unlock(&g->stats_mux, QUI);
 			xpthread_mutex_unlock(&g->hash_mux[(hash(minArco.u, minArco.v, g->hashSize)) % g->nMutex], QUI);
 			xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
@@ -278,6 +279,8 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		g->costoMSF += w;
 		g->numCoCo--; //Diminuisce il numero di componenti connesse 
 		g->nArchi++;
+		set_msf_flag(g->vicini, u, v, true);
+		set_msf_flag(g->vicini, v, u, true);
 		xpthread_mutex_unlock(&g->stats_mux, QUI);
 
 		int min = cu < cv ? cu : cv; //Trova il minimo tra le due radici
@@ -326,13 +329,15 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 			g->costoMSF -= maxW;
 			g->costoMSF += w;
 			xpthread_mutex_unlock(&g->stats_mux, QUI);
+		} else {
+			//Incrementa il numero di archi 
+			xpthread_mutex_lock(&g->stats_mux, QUI);
+			g->nArchi++;
+			xpthread_mutex_unlock(&g->stats_mux, QUI);
 		}
 		xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
 		xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
-		//Incrementa il numero di archi 
-		xpthread_mutex_lock(&g->stats_mux, QUI);
-		g->nArchi++;
-		xpthread_mutex_unlock(&g->stats_mux, QUI);
+		
 	}
 	xpthread_mutex_lock(&g->stats_mux, QUI);
 	fprintf(stdout, "+ %d %d %d %d %ld \n", u,v, g->nArchi, g->numCoCo, g->costoMSF);
