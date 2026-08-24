@@ -56,14 +56,15 @@ arco *hash_get(int u, int v, arco **hashTable, int hashSize){
 	} 
 	return NULL;
 }
-int hash_put(arco *a, grafo *g){
-	arco *check = hash_get(a->u, a->v, g->gHash, g->hashSize);
+int hash_put(arco *a, grafo *g){ //Normalizzazione nel momento dell'inserimento per robustezza
+	int u = a->u, v = a->v;
+	if(v < u){ int t=u; u=v; v=t; }
+	arco *check = hash_get(u, v, g->gHash, g->hashSize);
 	if(check != NULL) return 1;
-	int index = hash(a->u, a->v, g->hashSize); //Ottiene l'indice nell'hashtable
-	a->next = g->gHash[index];
-	g->gHash[index] = a;
+	a->next = g->gHash[hash(u,v,g->hashSize)];
+	g->gHash[hash(u,v,g->hashSize)] = a;
 	return 0;
-} 
+}
 
 void hash_remove(int u, int v, arco**hashTable, int hashSize){
 	if(v<u){
