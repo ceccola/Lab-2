@@ -78,7 +78,7 @@ int hash_bucket(int u, int v, grafo *g){ //Normalizzazione dell'input per la fun
 }
 
 bool cancella_arco(int u, int v, grafo *g){
-	//Locking ottimistico con retry loop per fare in modo di acquisire le corrette mutex per le componenti connesse
+	//Retry loop con validazione delle lock
 	int i, j;
 	while(true){
 		xpthread_rwlock_rdlock(&g->rwlock, QUI);
@@ -99,10 +99,14 @@ bool cancella_arco(int u, int v, grafo *g){
 		xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
 		xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 	}
-	int index = hash(u,v,g->hashSize);
-	xpthread_mutex_lock(&g->hash_mux[index % g->nMutex], QUI);
+
+	int index = hash_bucket(u,v,g);
+	xpthread_mutex_lock(&g->hash_mux[index], QUI);
 	arco *a = hash_get(u,v, g->gHash, g->hashSize);
 	if(a == NULL){
+		xpthread_mutex_unlock(&g->hash_mux[index % g->nMutex], QUI);
+		xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
+		xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 		fprintf(stdout, "- %d %d 0", u, v);
 		xperror(1, "Arco non trovato"); 
 		return NULL;
@@ -192,22 +196,23 @@ bool cancella_arco(int u, int v, grafo *g){
 			g->numCoCo++; //Diventano due comopnenti connesse a sè
 			g->costoMSF -= cpy.weight; //Sottrae il costo dell'arco rimosso dal costo della msf
 			xpthread_mutex_unlock(&g->stats_mux, QUI);
-		} else { 
+		} else { //Arco ponte trovato 
 			xpthread_mutex_lock(&g->hash_mux[hash_bucket(minArco.u, minArco.v, g)], QUI);
 			//Se l'arco è stato trovato imposta il flag msf a true sia nell'hash che in vicini
 			arco *update = hash_get(minArco.u, minArco.v, g->gHash, g->hashSize); 
 			update->msf = true; 
-
-			xpthread_mutex_lock(&g->stats_mux, QUI);
-			//Aggiorna il costo della msf togliendo il peso dell'arco rimosso e aggiungendo il peso del nuovo arco
-			g->costoMSF -= cpy.weight;
-			g->costoMSF += minArco.weight;
+			xpthread_mutex_unlock(&g->hash_mux[hash_bucket(minArco.u, minArco.v, g)], QUI);
 
 			set_msf_flag(g->vicini, minArco.u, minArco.v, true);
 			set_msf_flag(g->vicini, minArco.v, minArco.u, true);
 
+			
+			xpthread_mutex_lock(&g->stats_mux, QUI);
+			//Aggiorna il costo della msf togliendo il peso dell'arco rimosso e aggiungendo il peso del nuovo arco
+			g->costoMSF -= cpy.weight;
+			g->costoMSF += minArco.weight;
 			xpthread_mutex_unlock(&g->stats_mux, QUI);
-			xpthread_mutex_unlock(&g->hash_mux[hash_bucket(minArco.u, minArco.v, g)], QUI);
+			
 			xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
 			xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 		}
@@ -227,9 +232,8 @@ bool cancella_arco(int u, int v, grafo *g){
 }
 
 bool aggiungi_arco(int u, int v, int w, grafo *g){
-	int cu, cv;
-	//Aggiorna le liste di adiacenza
-	int i, j;
+	int cu, cv, i, j; 
+	//Retry loop con validazione delle lock
 	while(true){
 		xpthread_rwlock_rdlock(&g->rwlock, QUI);
 		i = g->cCon[u] % g->cCon_mux_dim;
@@ -252,7 +256,7 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 	}
 	//Controlla che l'arco non esiste già, in quel caso termina subito
-	int index = hash(u,v,g->hashSize) % g->nMutex;
+	int index = hash_bucket(u,v,g);
 	xpthread_mutex_lock(&g->hash_mux[index], QUI);
 	//Allocazione e inizializzazione dei campi dell'arco
 	arco *a = malloc(sizeof(arco));
@@ -264,14 +268,15 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 	int ok = hash_put(a, g);
 	if(ok != 0){ // Se la put non è andata a buon fine rilascia la lock e stampa l'esito
 		xpthread_mutex_unlock(&g->hash_mux[index], QUI);
+		xpthread_mutex_unlock(&g->cCon_mux[j], QUI);
+		xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 		free(a);
 		fprintf(stdout, "+ %d %d %d 0", u, v, w);
 		return NULL;
 	}
 	xpthread_mutex_unlock(&g->hash_mux[index], QUI);
 
-	
-
+	//Aggiorna le liste di adiacenza 
 	aggiorna_lista(u,v,w,g);
 	aggiorna_lista(v,u,w,g);
 
@@ -285,8 +290,6 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 		g->costoMSF += w;
 		g->numCoCo--; //Diminuisce il numero di componenti connesse 
 		g->nArchi++;
-		set_msf_flag(g->vicini, u, v, true);
-		set_msf_flag(g->vicini, v, u, true);
 		xpthread_mutex_unlock(&g->stats_mux, QUI);
 
 		int min = cu < cv ? cu : cv; //Trova il minimo tra le due radici
@@ -324,7 +327,7 @@ bool aggiungi_arco(int u, int v, int w, grafo *g){
 			xpthread_mutex_lock(&g->hash_mux[index], QUI);
 			a->msf = true;
 			xpthread_mutex_unlock(&g->hash_mux[index], QUI);
-			//Imposta a false la flag del nuovo arco nelle liste di adiacenza
+			//Imposta a false la flag del vecchio arco nelle liste di adiacenza
 			set_msf_flag(g->vicini, maxU, maxV, false);
 			set_msf_flag(g->vicini, maxV, maxU, false);
 			//Imposta a true la flag del nuovo arco nelle liste di adiacenza
