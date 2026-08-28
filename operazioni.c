@@ -10,8 +10,10 @@
 #include <limits.h>   // concetto di infinito
 
 reachList bfs_cc(grafo *g, int u){
+	int dim = 100; //Dimensione iniziale della lista dei vicini
+
 	int *visitati = calloc(g->nNodi, sizeof(int)); //Bitmap dei nodi visitati
-	int *lu = malloc(g->nNodi * sizeof(int)); //Lista di nodi raggiungibili da start
+	int *lu = malloc(dim * sizeof(int)); //Lista di nodi raggiungibili da start
 
 	lu[0] = u;
 	visitati[u] = 1; //Setta a 1 il bit visitati di start
@@ -23,6 +25,11 @@ reachList bfs_cc(grafo *g, int u){
 		elemento *head = g->vicini[lu[read]];
 		while(head != NULL){
 			if(head->msf && visitati[head->id]==0){
+				if (write == dim){ //Se la lista di vicini è piena, raddoppia la dimensione
+					dim *= 2;
+					lu = realloc(lu, dim * sizeof(int));
+					if(lu == NULL) xtermina("Impossibile riallocare memoria per la lista dei vicini", QUI);	
+				}
 				lu[write] = head->id; //Inserisci il nodo nella lista dei raggiungibili
 				visitati[head->id] = 1; //Segnalo come visitato
 				write++; //Sposta avanti il puntatore a dove scrivere
