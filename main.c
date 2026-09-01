@@ -12,7 +12,7 @@
 /*--------------------------------------------------MAIN----------------------------------------------------------------------------------*/
 int main (int argc, char *argv[]){
 	if(argc < 3){
-		termina("Utilizzo: msf.out file_grafo file_archi [-t threads] [-H hashsize] [-M nmutex]");
+		termina("Utilizzo: ./msf.out file_grafo file_archi [-t threads] [-H hashsize] [-M nmutex]");
 	}
 	char *file_grafo = argv[1];
 	char *file_op = argv[2];
@@ -44,18 +44,18 @@ int main (int argc, char *argv[]){
 
 /*---------------------------------------------PARSING ARCHI DA FILE--------------------------------------------------------------------- */
 	FILE *f = xfopen(file_grafo, "r", QUI); //Apertura file per la lettura degli archi del grafo 
-	arco **archi = NULL;
+	arco **archi = NULL; 
 	int cArchi = 0;
 	char *buffer = NULL; //Usato da getline
 	size_t n = 0; //riutilizzate ad ogni iterazione
 	while(true){
 		//Legge linea dal file salvando il contenuto in buffer
 		ssize_t e = getline(&buffer, &n, f); 
-		if(e < 0){
+		if(e < 0){ //Quando incontra EOF 
 			if(buffer != NULL){
-				free(buffer); //Dealloca il buffer usato per contenere la line 
+				free(buffer); //Dealloca il buffer usato per contenere la linea 
 			}
-			break; //Esco dal ciclo 
+			break; //Esce dal ciclo 
 		}
 		char *s = strtok(buffer, " "); 
 		if(s == NULL) continue;
@@ -67,15 +67,20 @@ int main (int argc, char *argv[]){
 				strtok(NULL, " "); //scarta la stringa "np"
 				g.nNodi = atoi(strtok(NULL, " ")) + 1;
 				g.nArchi = atoi(strtok(NULL, " "));
+				//Alloca liste di adiacenza, lista componenti connesse, hashTable e array di archi per Kruskal
 				g.vicini = calloc(g.nNodi, sizeof(elemento*));
 				if(g.vicini == NULL) xtermina("Impossibile allocare vicini", QUI);
+
 				g.cCon = malloc((g.nNodi) * sizeof(int));
 				if(g.cCon == NULL) xtermina("Impossibile allocare cCon", QUI);
+
 				g.gHash = calloc(g.hashSize, sizeof(arco*));
 				if(g.gHash == NULL) xtermina("Impossibile allocare gHash", QUI);
+
 				archi = malloc(g.nArchi * sizeof(arco*));
 				if(archi == NULL) xtermina("Impossibile allocare archi", QUI);
 				break; 
+
 			case 'a': //Se la linea rappresenta un arco 
 				//Se non è stata ancora trovata la linea di inizio per configurare i valori
 				if(archi == NULL) xtermina("Linea di configurazione non trovata", QUI);
@@ -89,7 +94,8 @@ int main (int argc, char *argv[]){
 				a->v = v; 
 				a->weight = w; 
 				a->msf = false; 
-				hash_put(a, &g); //Inserisce nella hashTable
+				//Inserisce nella hashTable
+				hash_put(a, &g); 
 				//Aggiorna liste di adiacenza di u e v 
 				aggiorna_lista(u,v,w,&g);
 				aggiorna_lista(v,u,w,&g);
@@ -106,35 +112,38 @@ int main (int argc, char *argv[]){
 	g.costoMSF = kruskalAlgo(&g, archi);
 	fprintf(stderr, "%d %d %ld \n", g.nArchi, g.numCoCo, g.costoMSF);
 /*--------------------------------------------OPERAZIONI CONCORRENTI----------------------------------------------------------------------*/
-	//Dichiara e inizializza mutex e strutture necessarie alla sincronizzazione
+	//Dichiara e inizializza semafori e mutex per il meccanismo produttore-consumatore
 	pclock locks;
 	locks.coda = 0;
 	locks.testa = 0;
 	xsem_init(&locks.pieni, 0, 0, QUI);
 	xsem_init(&locks.vuoti, 0, 1024, QUI);
 	xpthread_mutex_init(&locks.mutex, NULL, QUI);
+	//Struttura per passare argomenti alla funzione consumatore
 	argomenti *a = malloc(sizeof(argomenti));
 	a->locks = &locks;
 	a->g = &g;
 
+	//Alloca e inizializza array di mutex per lock striping su hashtable
 	g.hash_mux = malloc(g.nMutex * sizeof(pthread_mutex_t));
-	//Inizializza array di mutex per lock striping su hashtable
 	for(int i=0; i<g.nMutex; i++){
 		xpthread_mutex_init(&g.hash_mux[i], NULL, QUI);
 	}
+	//Inizializza array di mutex per lock striping sulle componenti connesse
 	pthread_mutexattr_t att;
 	pthread_mutexattr_init(&att);
-	pthread_mutexattr_settype(&att, PTHREAD_MUTEX_RECURSIVE);
-	//Inizializza array di mutex per componenti
-	g.cCon_mux_dim= g.nMutex < g.nNodi ? g.nMutex : g.nNodi;
+	pthread_mutexattr_settype(&att, PTHREAD_MUTEX_RECURSIVE); 
+	g.cCon_mux_dim = g.nMutex < g.nNodi ? g.nMutex : g.nNodi; 
 	g.cCon_mux = malloc(g.cCon_mux_dim * sizeof(pthread_mutex_t));
 	for(int i=0; i<g.cCon_mux_dim; i++){
 		xpthread_mutex_init(&g.cCon_mux[i], &att, QUI);
 	}
 	pthread_mutexattr_destroy(&att);
+	//Inizializza la rwlock per la coordinazione di letture e scritture su cCon
 	xpthread_rwlock_init(&g.rwlock, NULL, QUI);
 	//Inizializza il mutex per la modifica delle statistiche del grafo
 	xpthread_mutex_init(&g.stats_mux, NULL, QUI);
+	//Inizializza l'array di id dei thread e crea i thread consumatori
 	pthread_t *thread_ids = malloc(nThread * sizeof(pthread_t));
 	for(int i = 0; i<nThread; i++){
 		int ret = xpthread_create( &thread_ids[i], NULL, consumatore, (void *)a, QUI);
@@ -151,6 +160,7 @@ int main (int argc, char *argv[]){
 		void *retval;
 		int ret = xpthread_join(thread_ids[i], &retval,QUI);
 		if (ret != 0){
+			xperror(ret, "Errore join thread");
 			xtermina("", QUI);
 		}
 	}

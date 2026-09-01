@@ -9,10 +9,10 @@
 
 int crivello(int n){ //Ritorna il numero primo più vicino alla dimensione della tabella hash
 	//Crivello di Eratostene
-	bool *sieve = calloc((n+1), sizeof(bool)); //false = primo 
+	bool *sieve = calloc((n+1), sizeof(bool)); //false => il numero è primo 
 	if(sieve == NULL) xtermina("Impossibile allocare sieve", QUI);
 	sieve[0] = sieve[1] = true; //0 e 1 non vengono considerati 
-	for(int i = 2; (long) i*i <= n;i++){ 
+	for(int i = 2; (long) i*i <= n;i++){ //Scorre fino alla radice quadrata di n
 		//per ogni elemento non composto, segna i suoi multipli come composti
 		if(!sieve[i]){
 			for (int j = i*i; j<= n; j+=i){
@@ -34,9 +34,8 @@ int crivello(int n){ //Ritorna il numero primo più vicino alla dimensione della
 
 int hash(int u, int v, int hashSize) {
     long key = ((long)u * 2654435761UL )^ ((long)v * 2246822519UL);
-    return (int)(labs(key) % hashSize);
+    return (int)(labs(key) % hashSize); //Ritorna il valore assoluto della chiave modulo la dimensione della tabella hash
 }
-
 
 
 arco *hash_get(int u, int v, arco **hashTable, int hashSize){
@@ -52,15 +51,17 @@ arco *hash_get(int u, int v, arco **hashTable, int hashSize){
 			return a;
 		} 
 		a = a->next;
-		
 	} 
 	return NULL;
 }
-int hash_put(arco *a, grafo *g){ //Normalizzazione nel momento dell'inserimento per robustezza
+int hash_put(arco *a, grafo *g){ 
+	//Normalizzazione nel momento dell'inserimento per robustezza
 	int u = a->u, v = a->v;
 	if(v < u){ int t=u; u=v; v=t; }
+	//Controlla se l'arco è già presente nella hashTable, se sì ritorna 1
 	arco *check = hash_get(u, v, g->gHash, g->hashSize);
 	if(check != NULL) return 1;
+	//Inserisce l'arco in testa alla lista della posizione hash(u,v)
 	a->next = g->gHash[hash(u,v,g->hashSize)];
 	g->gHash[hash(u,v,g->hashSize)] = a;
 	return 0;
@@ -81,7 +82,8 @@ void hash_remove(int u, int v, arco**hashTable, int hashSize){
 		free(f);
 		return;
 	}
-	while(a != NULL && a->next != NULL){ //Guarda uno in avanti ed elimina 
+	//Scorre la lista del bucket e elimina l'arco se lo trova
+	while(a != NULL && a->next != NULL){
 		if(a->next->u == u && a->next->v == v){
 			f=a->next;
 			a->next = a->next->next;
@@ -99,11 +101,11 @@ void aggiorna_lista(int u, int v, int w, grafo *g){
 	ad_u->id = v; 
 	ad_u->w = w;
 	ad_u->msf = false;
-	elemento **curr = &g->vicini[u];  //Puntatore che devi modificare
-	while(*curr != NULL && (*curr)->id < v){ //Se l'id è già minore di quello da inserire, scorri in avanti
+	elemento **curr = &g->vicini[u];  //Puntatore che deve modificare
+	while(*curr != NULL && (*curr)->id < v){ //Se l'id è già minore di quello da inserire, scorre in avanti
 		curr = &(*curr)->next;
 	}
-	ad_u->next = *curr; //Quando trovi il punto dove inserire, assegna il puntatore come next
+	ad_u->next = *curr; //Quando trova il punto dove inserire, assegna il puntatore come next
 	*curr = ad_u; //Modifica puntatore da modificare
 }
 
@@ -115,11 +117,13 @@ bool rimuovi_elemento(int u, int v, elemento **vicini){ //Elimina un elemento da
 	
 	elemento *prev = NULL;
 	while(head != NULL){
+		//Se l'id dell'elemento corrente non è quello da eliminare, scorre in avanti
 		if(head->id != v){
 			prev = head;
 			head = head->next;
 			continue;
 		}
+		//Altrimenti elimina l'elemento corrente dalla lista concatenata
 		if(prev == NULL){
 			vicini[u] = head->next;
 			free(head);
@@ -131,7 +135,7 @@ bool rimuovi_elemento(int u, int v, elemento **vicini){ //Elimina un elemento da
 	}
 	return false;
 }
-void set_msf_flag(elemento **vicini, int u, int v, bool val){ //Imposta a true il flag msf per un arco
+void set_msf_flag(elemento **vicini, int u, int v, bool val){ //Imposta a val il flag msf per un arco
 	elemento *head = vicini[u];
 	while(head != NULL && head->id != v ){
 		head = head->next;
@@ -143,7 +147,7 @@ void set_msf_flag(elemento **vicini, int u, int v, bool val){ //Imposta a true i
 
 
 /*---------------------------------------------UNION FIND E KRUSKAL-----------------------------------------------------------*/
-int find(int *parent, int component){ //Find con union by rank ricorsiva
+int find(int *parent, int component){ //Find ricorsiva con path compression
 	if(parent[component] == component){
 		return component; //Se il componente è la radice di un albero ritornala
 	}
@@ -151,7 +155,7 @@ int find(int *parent, int component){ //Find con union by rank ricorsiva
 	return parent[component] = find(parent, parent[component]); 
 }
 
-void unione(int *parent, int *rank, int n1, int n2){ //Union con path compression
+void unione(int *parent, int *rank, int n1, int n2){ //Union by rank 
 	int r1 = find(parent, n1);
 	int r2 = find(parent, n2);
 	//Unisce l'albero più piccolo sotto il più grande 
@@ -179,7 +183,7 @@ int compare(const void *a1,const void *a2){ //qsort passa puntatori a void
 
 long kruskalAlgo(grafo *g, arco **archi){
 	g->numCoCo = g->nNodi;
-    // Ordina l'array di archi per peso crescente
+    //Ordina l'array di archi per peso crescente
     qsort(archi, g->nArchi, sizeof(arco*), compare);
 
     int *parent = malloc(g->nNodi * sizeof(int)); //Array che indica il padre di ogni nodo
@@ -191,7 +195,7 @@ long kruskalAlgo(grafo *g, arco **archi){
 		g->cCon[i] = i; //inizializza l'array cCon con tutti i nodi come componenti connesse a sè
 	}
 
-    //Costo minimo da ritornare
+    //Costo MSF da ritornare
     long minCost = 0;
     for (int i = 0; i < g->nArchi; i++) {
         int r1 = find(parent, archi[i]->u);
@@ -210,6 +214,7 @@ long kruskalAlgo(grafo *g, arco **archi){
             minCost += wt;
         }
     }
+
 	//Popola cCon
 	int *min_nodo = malloc(g->nNodi * sizeof(int)); //min_nodo[r] = nodo minore della c.c. con radice r
 	for(int i = 0; i < g->nNodi; i++){ //Inizializza min_nodo
@@ -220,7 +225,8 @@ long kruskalAlgo(grafo *g, arco **archi){
 		int r = find(parent, i);
 		if(i < min_nodo[r]) min_nodo[r] = i;
 	}
-	for(int i = 0; i<g->nNodi; i++){ //Popola cCon con i valori di min_nodo
+	for(int i = 0; i<g->nNodi; i++){
+		//Per ogni nodo, trova la sua radice e assegna a cCon[i] il nodo minore della c.c. con radice r
 		g->cCon[i] = min_nodo[find(parent,i)];
 	}
 	free(parent);
@@ -242,9 +248,9 @@ void free_archi(arco *a, int *nArchi, long *costoMSF, int *maxlen, int *totlen){
 		len+=1;
 		*nArchi+=1;
 		if(a->msf) *costoMSF+=a->weight;
-		arco *nx = a->next;
+		arco *nxt = a->next;
 		free(a);
-		a = nx;
+		a = nxt;
 	}
 	if(len > *maxlen) *maxlen = len;
 	*totlen+=len;
@@ -252,6 +258,7 @@ void free_archi(arco *a, int *nArchi, long *costoMSF, int *maxlen, int *totlen){
 
 void free_grafo(grafo *g, arco **archi){
 	//Contatori per il calcolo finale 
+	
 	int nArchi = 0, numCoCo = 0, contapieni = 0, maxlen = 0, totlen = 0;
 	long costoMSF = 0;
 
@@ -263,11 +270,12 @@ void free_grafo(grafo *g, arco **archi){
 	free(archi); //Libera array di archi
 	free(g->gHash); //Libera gHash
 	//Libera gli elementi e calcola il numero di componenti connesse
-	int *cc = calloc(g->nNodi, sizeof(int));
+	int *cc = calloc(g->nNodi, sizeof(int)); //Array per tenere conto delle componenti già viste 
 
-	for(int i = 0; i< g->nNodi; i++){ //Free degli elementi
+	for(int i = 0; i< g->nNodi; i++){ 
+		//Free degli elementi
 		int comp = g->cCon[i];
-    	if(cc[comp] == 0){
+    	if(cc[comp] == 0){ //Se la componente di i non è stata contata, incremnta il contatore e aggiorna cc
         numCoCo++;
         cc[comp] = 1;
     	}

@@ -107,7 +107,7 @@ bool cancella_arco(int u, int v, grafo *g){
 		xpthread_mutex_unlock(&g->cCon_mux[i], QUI);
 	}
 
-	int index = hash_bucket(u,v,g);
+	int index = hash_bucket(u,v,g); //Calcolo dell'indice della mutex con normalizzazione degli indici 
 	xpthread_mutex_lock(&g->hash_mux[index], QUI);
 	arco *a = hash_get(u,v, g->gHash, g->hashSize);
 	if(a == NULL){
@@ -145,16 +145,17 @@ bool cancella_arco(int u, int v, grafo *g){
 		fprintf(stdout, "- %d %d 0", u, v);
 		return NULL;
 	} 
-	xpthread_mutex_lock(&g->hash_mux[index % g->nMutex], QUI);
 	//Elimina l'arco dalla hash
+	xpthread_mutex_lock(&g->hash_mux[index % g->nMutex], QUI);
 	hash_remove(u,v, g->gHash, g->hashSize);
 	xpthread_mutex_unlock(&g->hash_mux[index % g->nMutex], QUI);
 
+	//Aggiorna il numero di archi
 	xpthread_mutex_lock(&g->stats_mux, QUI);
 		g->nArchi--;
 	xpthread_mutex_unlock(&g->stats_mux, QUI);
 
-	if(cpy.msf){
+	if(cpy.msf){ //Se l'arco rimosso era nella MSF
 		//BFS sulle componenti connesse partento dai due nodi 
 		reachList lu = bfs_cc(g, u);
 		reachList lv = bfs_cc(g, v);

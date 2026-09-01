@@ -15,9 +15,9 @@ public class Msf{
 			this.msf = false;
 		}
 
-		@Override
+		@Override //Funzione di comparazione per ordinare gli archi in base al peso
 		public int compareTo(Arco other){
-			return Integer.compare(this.w, other.w);
+			return Integer.compare(this.w, other.w); 
 		}
 
 		@Override
@@ -66,9 +66,7 @@ public class Msf{
 			while(true){
 				String op = in.readLine();
 				if(op == null) break;
-				String[] campi = op.trim().split("\\s+");
-				
-
+				String[] campi = op.trim().split("\\s+"); // Per ignorare spazi multipli tra i campi
 				switch(campi[0]){
 					case "c": //Se trova un commento lo ignora 
 						continue;
@@ -76,8 +74,8 @@ public class Msf{
 						nNodi = Integer.parseInt(campi[2]) + 1 ;
 						nArchi = Integer.parseInt(campi[3]);
 						break;
-					case "a":
-						if(nNodi == -1 || nArchi == -1){
+					case "a": //Se trova un arco, lo inizializza e lo aggiunge alla hashap e alla lista di archi per kruskal
+						if(nNodi == -1 || nArchi == -1){ //Controlla che sia stata prima individuata la riga di configurazione
 							System.err.println("Linea di configurazione non trovata, file non valido");
 							System.exit(1);
 						}
@@ -99,7 +97,7 @@ public class Msf{
 				}
 			}
 		} catch(Exception e){
-			System.err.println("Errore: " + e.getMessage());
+			System.err.println("Errore: " + e.getMessage()+ "\n");
 			e.printStackTrace(System.err);
 			System.exit(1);
 		}
@@ -160,13 +158,13 @@ public class Msf{
 	}
 /*-------------------------------------------------------------KRUSKAL---------------------------------------------------------------- */
 	archi.sort(Arco::compareTo); //Ordina gli archi per peso crescente
-	//Array di parent e rank per l'unione dei componenti con path compression
+	//Array di parent e rank per find e union ottimizzati
 	int[] parent = new int[nNodi]; 
 	for(int i = 0; i < nNodi; i++){
 		parent[i] = i;
 	}
 	int [] rank = new int[nNodi];
-	Arrays.fill(rank, 1);
+	Arrays.fill(rank, 0);
 
 	numCoCo = nNodi;
 	long costoMSF = 0;
@@ -183,5 +181,5 @@ public class Msf{
 		}
 	}
 	System.out.println(nArchi + " " + numCoCo + " " + costoMSF);
-}
+	}
 }

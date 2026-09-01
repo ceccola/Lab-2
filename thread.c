@@ -68,13 +68,12 @@ void produttore (char *file, pclock *locks, int nThread){
 	operazione o;
 	o.desc = 't'; //Segno di terminazione
 	for(int i = 0; i< nThread; i++){
-		
 		sem_wait(&locks->vuoti); 
-				xpthread_mutex_lock(&locks->mutex, QUI);
-				locks->buffer[locks->coda] = o;
-				locks->coda = (locks->coda + 1) % 1024;
-				xpthread_mutex_unlock(&locks->mutex, QUI);
-				xsem_post(&locks->pieni, QUI);
+		xpthread_mutex_lock(&locks->mutex, QUI);
+		locks->buffer[locks->coda] = o;
+		locks->coda = (locks->coda + 1) % 1024;
+		xpthread_mutex_unlock(&locks->mutex, QUI);
+		xsem_post(&locks->pieni, QUI);
 	}
 	fclose(f2);
 }
