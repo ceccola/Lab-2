@@ -126,8 +126,6 @@ bool cancella_arco(int u, int v, grafo *g){
 	cpy.msf = a->msf;
 	xpthread_mutex_unlock(&g->hash_mux[index % g->nMutex], QUI);
 
-	
-
 	//Aggiorna le liste di adiacenza 
 	bool r1 = rimuovi_elemento(u,v,g->vicini);
 	if(!r1){
@@ -152,7 +150,7 @@ bool cancella_arco(int u, int v, grafo *g){
 
 	//Aggiorna il numero di archi
 	xpthread_mutex_lock(&g->stats_mux, QUI);
-		g->nArchi--;
+	g->nArchi--;
 	xpthread_mutex_unlock(&g->stats_mux, QUI);
 
 	if(cpy.msf){ //Se l'arco rimosso era nella MSF

@@ -22,14 +22,14 @@
 #include <fcntl.h>	  /* For O_* constants */
 #include <pthread.h>
 /*---------------------------------------------STRUTTURE------------------------------------*/
-typedef struct operazione{
-	char desc;
+typedef struct operazione{ //Struttura di un'operazione per il meccanismo produttore-consumatore
+	char desc; //Descrittore dell'operazione
 	int u;
 	int v; 
 	int w;
 } operazione;
 
-typedef struct pclock{
+typedef struct pclock{ //Struttura per raggruppare semafori e mutex per il meccanismo produttore-consumatore
 	sem_t vuoti, pieni;
 	pthread_mutex_t mutex;
 	operazione buffer[1024];

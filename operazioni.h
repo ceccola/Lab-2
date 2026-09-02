@@ -20,10 +20,10 @@
 #include <fcntl.h>	  /* For O_* constants */
 #include <pthread.h>
 
-typedef struct reachList{
-	int *vicini; 
-	int *visitati;
-	int size; 
+typedef struct reachList{ //Lista dei vicini raggiungibilo da un nodo u
+	int *vicini; //Lista dei vicini
+	int *visitati; //Bitmap dei nodi visitati
+	int size; //Numero dei vicini
 } reachList;
 typedef struct terna{
 	int nArchi;
